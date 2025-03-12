@@ -18,10 +18,11 @@ template <typename T> class Problem
   public:
     Problem(T initialState, T goalState);
 
-    Node<T> getInitial();
+    Node<T> *getInitial();
+    Node<T> *getResult();
 
-    virtual bool isGoal(Node<T> node);
-    virtual std::vector<Node<T>> expand();
+    virtual bool isGoal(Node<T> &node);
+    virtual std::vector<Node<T> *> expand(Node<T> &node);
 };
 
 #endif // PROBLEM_H

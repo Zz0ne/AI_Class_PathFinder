@@ -5,6 +5,6 @@
 
 namespace bfs
 {
-template <typename T> Node<T> search(Problem<T> problem);
+template <typename T> bool search(Problem<T> &problem);
 }
 #endif // BESTFIRSTSEARCH_H

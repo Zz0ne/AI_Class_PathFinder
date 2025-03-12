@@ -1,3 +1,8 @@
 #include <iostream>
 
-int main() {}
+#include "algorithms/bestFirstSearch.h"
+#include "algorithms/helpers/Problem.h"
+
+int main()
+{
+}

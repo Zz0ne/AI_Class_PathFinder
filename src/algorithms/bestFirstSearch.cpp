@@ -1,17 +1,15 @@
 #include "bestFirstSearch.h"
 
-#include "bestFirstSearch.h"
-
 #include <queue>
 #include <unordered_set>
 
-template <typename T> Node<T> bfs::search(Problem<T> problem)
+template <typename T> bool bfs::search(Problem<T> &problem)
 {
-    Node<T> initialNode = problem.getInitial();
+    Node<T> *initialNode = problem.getInitial();
 
-    std::priority_queue<Node<T>> frontier;
+    std::priority_queue<Node<T> *> frontier;
 
-    std::unordered_set<Node<T>> reached;
+    std::unordered_set<Node<T> *> reached;
     reached.insert(initialNode);
 
     while (!frontier.empty())
@@ -19,14 +17,20 @@ template <typename T> Node<T> bfs::search(Problem<T> problem)
         auto node = frontier.pop();
 
         if (problem.isGoal(node))
-            return node;
+        {
+            return true;
+        }
 
         auto nextNodes = problem.expand();
-        for (auto nextNode : nextNodes)
+        for (auto currNode : nextNodes)
         {
-            if (reached.find(nextNode) == reached.end())
+            auto reachedNode = reached.find(currNode);
+            if (reachedNode == reached.end() || currNode.cost < reachedNode.cost)
             {
+                reached.insert(currNode);
+                frontier.push(currNode);
             }
         }
     }
+    return false;
 }
