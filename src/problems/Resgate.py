@@ -1,26 +1,26 @@
-from ..searchAlgorithms.helpers.Problem import Problem
+from searchAlgorithms.helpers.Problem import Problem
 from searchAlgorithms.helpers.Node import Node
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
 class RescueState:
-    peopleRescued: int
-    coordinates: tuple
+    coordinates: tuple[int, int]
     teamLeft: bool
     timeLeft: int
+    rescued: frozenset[tuple[int, int]] = field(default_factory=frozenset)
 
 
 class Rescue(Problem):
     def __init__(
         self,
         initialState: RescueState,
-        goalState: RescueState,
         park: list[list[int]],
         objective: int,
         totalVictims: int,
     ):
-        super().__init__(initialState, goalState)
+        placeHolder = RescueState((0, 0), False, 0)
+        super().__init__(initialState, placeHolder)
         self._park = park
         self._parkSize = len(park)
         self._objective = objective
@@ -39,9 +39,7 @@ class Rescue(Problem):
                 if timeLeft < 0:
                     return None
 
-                newState = RescueState(
-                    node.state.peopleRescued, (x, new_y), True, timeLeft
-                )
+                newState = RescueState((x, new_y), True, timeLeft, node.state.rescued)
                 newNode = Node(newState, node)
                 newNode.cost = node.cost + 1
                 return newNode
@@ -52,14 +50,19 @@ class Rescue(Problem):
             return None
 
         cost = self._park[new_y][x]
-        timeLeft = node.state.timeLeft - cost
 
-        if timeLeft < 0:
-            return None
+        timeLeft = node.state.timeLeft
+        rescued = node.state.rescued
 
-        peopleRescued = node.state.peopleRescued + (cost < 0)
+        if cost < 0 and (x, new_y) not in rescued:
+            timeLeft += abs(cost)
+            rescued = rescued.union({(x, new_y)})
+        else:
+            timeLeft -= cost
+            if timeLeft < 0:
+                return None
 
-        newState = RescueState(peopleRescued, (x, new_y), False, timeLeft)
+        newState = RescueState((x, new_y), False, timeLeft, rescued)
         newNode = Node(newState, node)
         newNode.cost = node.cost + cost
         return newNode
@@ -68,16 +71,12 @@ class Rescue(Problem):
         x, y = node.state.coordinates
         new_y = y + 1
 
-        if new_y == self._parkSize:
+        if new_y >= self._parkSize:
             if x == self._parkSize // 2:
                 timeLeft = node.state.timeLeft - 1
-
                 if timeLeft < 0:
                     return None
-
-                newState = RescueState(
-                    node.state.peopleRescued, (x, new_y), True, timeLeft
-                )
+                newState = RescueState((x, new_y), True, timeLeft, node.state.rescued)
                 newNode = Node(newState, node)
                 newNode.cost = node.cost + 1
                 return newNode
@@ -88,14 +87,18 @@ class Rescue(Problem):
             return None
 
         cost = self._park[new_y][x]
-        timeLeft = node.state.timeLeft - cost
+        timeLeft = node.state.timeLeft
+        rescued = node.state.rescued
 
-        if timeLeft < 0:
-            return None
+        if cost < 0 and (x, new_y) not in rescued:
+            timeLeft += abs(cost)
+            rescued = rescued.union({(x, new_y)})
+        else:
+            timeLeft -= cost
+            if timeLeft < 0:
+                return None
 
-        peopleRescued = node.state.peopleRescued + (cost < 0)
-
-        newState = RescueState(peopleRescued, (x, new_y), False, timeLeft)
+        newState = RescueState((x, new_y), False, timeLeft, rescued)
         newNode = Node(newState, node)
         newNode.cost = node.cost + cost
         return newNode
@@ -107,13 +110,9 @@ class Rescue(Problem):
         if new_x < 0:
             if y == self._parkSize // 2:
                 timeLeft = node.state.timeLeft - 1
-
                 if timeLeft < 0:
                     return None
-
-                newState = RescueState(
-                    node.state.peopleRescued, (new_x, y), True, timeLeft
-                )
+                newState = RescueState((new_x, y), True, timeLeft, node.state.rescued)
                 newNode = Node(newState, node)
                 newNode.cost = node.cost + 1
                 return newNode
@@ -124,14 +123,18 @@ class Rescue(Problem):
             return None
 
         cost = self._park[y][new_x]
-        timeLeft = node.state.timeLeft - cost
+        timeLeft = node.state.timeLeft
+        rescued = node.state.rescued
 
-        if timeLeft < 0:
-            return None
+        if cost < 0 and (new_x, y) not in rescued:
+            timeLeft += abs(cost)
+            rescued = rescued.union({(new_x, y)})
+        else:
+            timeLeft -= cost
+            if timeLeft < 0:
+                return None
 
-        peopleRescued = node.state.peopleRescued + (cost < 0)
-
-        newState = RescueState(peopleRescued, (new_x, y), False, timeLeft)
+        newState = RescueState((new_x, y), False, timeLeft, rescued)
         newNode = Node(newState, node)
         newNode.cost = node.cost + cost
         return newNode
@@ -143,13 +146,9 @@ class Rescue(Problem):
         if new_x == self._parkSize:
             if y == self._parkSize // 2:
                 timeLeft = node.state.timeLeft - 1
-
                 if timeLeft < 0:
                     return None
-
-                newState = RescueState(
-                    node.state.peopleRescued, (new_x, y), True, timeLeft
-                )
+                newState = RescueState((new_x, y), True, timeLeft, node.state.rescued)
                 newNode = Node(newState, node)
                 newNode.cost = node.cost + 1
                 return newNode
@@ -160,14 +159,18 @@ class Rescue(Problem):
             return None
 
         cost = self._park[y][new_x]
-        timeLeft = node.state.timeLeft - cost
+        timeLeft = node.state.timeLeft
+        rescued = node.state.rescued
 
-        if timeLeft < 0:
-            return None
+        if cost < 0 and (new_x, y) not in rescued:
+            timeLeft += abs(cost)
+            rescued = rescued.union({(new_x, y)})
+        else:
+            timeLeft -= cost
+            if timeLeft < 0:
+                return None
 
-        peopleRescued = node.state.peopleRescued + (cost < 0)
-
-        newState = RescueState(peopleRescued, (new_x, y), False, timeLeft)
+        newState = RescueState((new_x, y), False, timeLeft, rescued)
         newNode = Node(newState, node)
         newNode.cost = node.cost + cost
         return newNode
@@ -181,9 +184,9 @@ class Rescue(Problem):
         return self._goalNode
 
     def isGoal(self, node: Node) -> bool:
-        s = node.state
+        s: RescueState = node.state
 
-        if s.peopleRescued != self._objective:
+        if len(s.rescued) != self._objective:
             return False
 
         if not s.teamLeft:
@@ -196,6 +199,9 @@ class Rescue(Problem):
         return True
 
     def expand(self, node: Node) -> list[Node]:
+        if node.state.teamLeft:
+            return []
+
         expandedNodes = []
 
         upNode = self._moveUp(node)
@@ -218,3 +224,13 @@ class Rescue(Problem):
 
     def hashableState(self, node: Node):
         return node.state
+
+    def printSolution(self):
+        currNode = self.goalNode
+
+        print("---Start---")
+        while currNode:
+            print(currNode.state.coordinates, end=" ")
+            currNode = currNode.parent
+
+        print("\n---End---")

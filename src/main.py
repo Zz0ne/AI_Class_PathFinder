@@ -1,15 +1,29 @@
 from searchAlgorithms import uninformedSearch as search
-from problems.Puzzle8 import Puzzle8
+from problems.Resgate import Rescue, RescueState
+from instances import instances
 
-startState = [3, 6, 1, 2, 8, 0, 4, 7, 5]
-goalState = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
-puzzle8 = Puzzle8(startState, goalState)
+instance = instances[0]
 
-if search.breadthFirstSearch(puzzle8):
-    currNode = puzzle8.goalNode
-    while currNode:
-        print(currNode.state)
-        currNode = currNode.parent
-else:
-    print("No solution was found")
+park = instance["park"]
+n = instance["N"]
+time = instance["time"]
+objective = instance["K"]
+totalVictims = instance["W"]
+
+gates = [(n // 2, n - 1), (n // 2, 0), (0, n // 2), (n - 1, n // 2)]
+
+for gate in gates:
+    initialState = RescueState(gate, False, time)
+    rescue = Rescue(initialState, park, objective, totalVictims)
+
+    if search.depthLimitedSearch(rescue, 100):
+        rescue.printSolution()
+    else:
+        print("No solution was found")
+
+# TODO:
+# 1) search all the gates inside the problem
+# 2) add table info in the problem class
+# 3) time the algorithms
+# 3) print the table
