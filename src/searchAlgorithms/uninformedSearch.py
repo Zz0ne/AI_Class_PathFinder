@@ -84,11 +84,11 @@ def iterativeDeepeningSearch(problem, maxDepth=50):
 
 
 def breadthFirstSearch(problem: Problem):
-    initialNode = problem.initialNodes
+    initialNodes = problem.initialNodes
 
-    frontier = deque([initialNode])
+    frontier = deque(initialNodes)
 
-    reached = {problem.hashableState(initialNode): initialNode.cost}
+    reached = {problem.hashableState(node): node.cost for node in initialNodes}
 
     while frontier:
         currNode = frontier.popleft()

@@ -242,11 +242,11 @@ class Rescue(Problem):
         if rightNode:
             expandedNodes.append(rightNode)
 
-        return expandedNodes
+        return sorted(expandedNodes)
 
     def hashableState(self, node: Node):
         s = node.state
-        return (s.coordinates, tuple(s.rescued))
+        return (s.coordinates, tuple(sorted(s.rescued)))
 
     def printSolution(self):
         currNode = self.goalNode
@@ -254,9 +254,9 @@ class Rescue(Problem):
 
         while currNode:
             path.append(currNode.state.coordinates)
-            print(currNode.state.coordinates, currNode.state.timeLeft)
+            # print(currNode.state.coordinates, currNode.state.timeLeft)
             currNode = currNode.parent
-        print()
+        # print()
 
         path = path[::-1]
         path_set = set(path)
