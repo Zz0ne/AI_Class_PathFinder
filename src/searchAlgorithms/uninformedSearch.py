@@ -4,24 +4,14 @@ import heapq
 from collections import deque
 
 
-def print_puzzle(state: list[int]):
-    """Prints the 8-puzzle state in a 3x3 grid format."""
-    ROW_SIZE = 3  # Fixed for 8-puzzle
-
-    for i in range(ROW_SIZE):
-        row = state[i * ROW_SIZE : (i + 1) * ROW_SIZE]  # Get row slice
-        print(" | ".join(str(num) if num != 0 else " " for num in row))  # Format output
-        if i < ROW_SIZE - 1:
-            print("-" * 9)  # Row separator
-
-
 def uniformCostSearch(problem: Problem):
-    initialNode = problem.initialNode
+    initialNodes = problem.initialNodes
 
     frontier = []
-    heapq.heappush(frontier, initialNode)
+    for node in initialNodes:
+        heapq.heappush(frontier, node)
 
-    reached = {problem.hashableState(initialNode): initialNode.cost}
+    reached = {problem.hashableState(node): node.cost for node in initialNodes}
 
     while frontier:
         currNode = heapq.heappop(frontier)
@@ -40,11 +30,11 @@ def uniformCostSearch(problem: Problem):
 
 
 def depthFirstSearch(problem: Problem):
-    initialNode = problem.initialNode
+    initialNodes = problem.initialNodes
 
-    frontier = [initialNode]
+    frontier = initialNodes[:]
 
-    reached = {problem.hashableState(initialNode): initialNode.cost}
+    reached = {problem.hashableState(node): node.cost for node in initialNodes}
 
     while frontier:
         currNode = frontier.pop()
@@ -62,10 +52,11 @@ def depthFirstSearch(problem: Problem):
     return False
 
 
-def depthLimitedSearch(problem, limit):
-    initialNode = problem.initialNode
-    frontier = [(initialNode, 0)]  # (node, depth)
-    reached = {problem.hashableState(initialNode): initialNode.cost}
+def depthLimitedSearch(problem: Problem, limit: int):
+    initialNodes = problem.initialNodes
+
+    frontier = [(node, 0) for node in initialNodes]
+    reached = {problem.hashableState(node): node.cost for node in initialNodes}
 
     while frontier:
         currNode, currDepth = frontier.pop()
@@ -93,7 +84,7 @@ def iterativeDeepeningSearch(problem, maxDepth=50):
 
 
 def breadthFirstSearch(problem: Problem):
-    initialNode = problem.initialNode
+    initialNode = problem.initialNodes
 
     frontier = deque([initialNode])
 

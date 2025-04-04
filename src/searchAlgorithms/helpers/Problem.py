@@ -9,16 +9,12 @@ class Problem:
         self._initialNode = Node(self._initialState)
 
     @property
-    def initialState(self):
-        return self._initialState
-
-    @property
-    def initialNode(self):
-        return self._initialNode
-
-    @property
     def goalState(self):
         return self._goalState
+
+    @property
+    def initialNodes(self):
+        raise NotImplementedError("initialNodes must be implemented in a subclass")
 
     @property
     def goalNode(self) -> Node | None:

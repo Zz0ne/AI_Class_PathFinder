@@ -84,6 +84,10 @@ class Puzzle8(Problem):
         return newNode
 
     @property
+    def initialNodes(self):
+        return [self._initialNode]
+
+    @property
     def goalNode(self) -> Node | None:
         return self._goalNode
 
