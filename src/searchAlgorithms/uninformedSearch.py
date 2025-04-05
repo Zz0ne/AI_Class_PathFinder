@@ -75,7 +75,7 @@ def depthLimitedSearch(problem: Problem, limit: int):
     return False
 
 
-def iterativeDeepeningSearch(problem, maxDepth=50):
+def iterativeDeepeningSearch(problem, maxDepth):
     for depth in range(maxDepth):
         result = depthLimitedSearch(problem, depth)
         if result:

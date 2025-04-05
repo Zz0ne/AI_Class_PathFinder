@@ -5,10 +5,12 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class RescueState:
-    coordinates: tuple[int, int]
-    teamLeft: bool
-    timeLeft: int
-    rescued: set[tuple[int, int]] = field(default_factory=set)
+    coordinates: tuple[int, int]  # Posição atual no parque (x, y)
+    teamLeft: bool  # Indica se a equipa de resgate já saiu do parque
+    timeLeft: int  # Unidades de tempo restantes
+    rescued: frozenset[tuple[int, int]] = field(
+        default_factory=frozenset
+    )  # Conjunto das coordenadas das pessoas resgatadas
 
 
 class Rescue(Problem):
@@ -20,8 +22,10 @@ class Rescue(Problem):
         totalVictims: int,
         time: int,
     ):
+        # Estado inicial de placeholder para inicialização da superclasse
         placeHolder = RescueState((0, 0), False, 0)
         super().__init__(placeHolder, placeHolder)
+
         self._park = park
         self._parkSize = size
         self._objective = objective
@@ -29,46 +33,59 @@ class Rescue(Problem):
         self._time = time
 
         self._goalNode: Node | None = None
+        self._expansions = 0
 
-    def _moveUp(self, node: Node):
-        x, y = node.state.coordinates
-        new_y = y - 1
+    def _isValid(self, x, y):
+        # Verifica se as coordenadas estão dentro do parque e não são bloqueadas por um obstáculo
+        return (
+            0 <= x < self._parkSize
+            and 0 <= y < self._parkSize
+            and self._park[y][x] != 10
+        )
 
-        if new_y < 0:
-            if x == self._parkSize // 2:
-                timeLeft = node.state.timeLeft - 1
-
-                if timeLeft < 0:
-                    return None
-
-                newState = RescueState((x, new_y), True, timeLeft, node.state.rescued)
-                newNode = Node(newState, node)
-                newNode.cost = node.cost + 1
-                return newNode
-            else:
-                return None
-
-        if self._park[new_y][x] == 10:
-            return None
-
-        cost = self._park[new_y][x]
-
+    def _createNode(self, node, x, y):
+        # Método genérico para criar um novo Node após validar movimentos
+        cost = self._park[y][x]
         timeLeft = node.state.timeLeft
         rescued = node.state.rescued
 
-        if cost < 0 and (x, new_y) not in rescued:
+        # Resgata pessoas se a célula tiver custo negativo
+        if cost < 0 and (x, y) not in rescued:
             timeLeft += abs(cost)
-            rescued = rescued.union({(x, new_y)})
+            rescued = rescued.union({(x, y)})
         else:
             timeLeft -= cost
 
         if timeLeft <= 0:
             return None
 
-        newState = RescueState((x, new_y), False, timeLeft, rescued)
+        newState = RescueState((x, y), False, timeLeft, rescued)
         newNode = Node(newState, node)
-        newNode.cost = node.cost + cost
+        newNode.cost = node.cost + abs(cost)
         return newNode
+
+    # Os quatro métodos seguintes tratam do movimento em cada direção
+    def _moveUp(self, node: Node):
+        x, y = node.state.coordinates
+        new_y = y - 1
+
+        if new_y < 0:
+            if x == self._parkSize // 2:
+                if node.state.timeLeft <= 1:
+                    return None
+                return Node(
+                    RescueState(
+                        (x, new_y), True, node.state.timeLeft - 1, node.state.rescued
+                    ),
+                    node,
+                    node.cost + 1,
+                )
+            return None
+
+        if not self._isValid(x, new_y):
+            return None
+
+        return self._createNode(node, x, new_y)
 
     def _moveDown(self, node: Node):
         x, y = node.state.coordinates
@@ -76,36 +93,21 @@ class Rescue(Problem):
 
         if new_y >= self._parkSize:
             if x == self._parkSize // 2:
-                timeLeft = node.state.timeLeft - 1
-                if timeLeft < 0:
+                if node.state.timeLeft <= 1:
                     return None
-                newState = RescueState((x, new_y), True, timeLeft, node.state.rescued)
-                newNode = Node(newState, node)
-                newNode.cost = node.cost + 1
-                return newNode
-            else:
-                return None
-
-        if self._park[new_y][x] == 10:
+                return Node(
+                    RescueState(
+                        (x, new_y), True, node.state.timeLeft - 1, node.state.rescued
+                    ),
+                    node,
+                    node.cost + 1,
+                )
             return None
 
-        cost = self._park[new_y][x]
-        timeLeft = node.state.timeLeft
-        rescued = node.state.rescued
-
-        if cost < 0 and (x, new_y) not in rescued:
-            timeLeft += abs(cost)
-            rescued = rescued.union({(x, new_y)})
-        else:
-            timeLeft -= cost
-
-        if timeLeft <= 0:
+        if not self._isValid(x, new_y):
             return None
 
-        newState = RescueState((x, new_y), False, timeLeft, rescued)
-        newNode = Node(newState, node)
-        newNode.cost = node.cost + cost
-        return newNode
+        return self._createNode(node, x, new_y)
 
     def _moveLeft(self, node: Node):
         x, y = node.state.coordinates
@@ -113,114 +115,78 @@ class Rescue(Problem):
 
         if new_x < 0:
             if y == self._parkSize // 2:
-                timeLeft = node.state.timeLeft - 1
-                if timeLeft < 0:
+                if node.state.timeLeft <= 1:
                     return None
-                newState = RescueState((new_x, y), True, timeLeft, node.state.rescued)
-                newNode = Node(newState, node)
-                newNode.cost = node.cost + 1
-                return newNode
-            else:
-                return None
-
-        if self._park[y][new_x] == 10:
+                return Node(
+                    RescueState(
+                        (new_x, y), True, node.state.timeLeft - 1, node.state.rescued
+                    ),
+                    node,
+                    node.cost + 1,
+                )
             return None
 
-        cost = self._park[y][new_x]
-        timeLeft = node.state.timeLeft
-        rescued = node.state.rescued
-
-        if cost < 0 and (new_x, y) not in rescued:
-            timeLeft += abs(cost)
-            rescued = rescued.union({(new_x, y)})
-        else:
-            timeLeft -= cost
-
-        if timeLeft <= 0:
+        if not self._isValid(new_x, y):
             return None
 
-        newState = RescueState((new_x, y), False, timeLeft, rescued)
-        newNode = Node(newState, node)
-        newNode.cost = node.cost + cost
-        return newNode
+        return self._createNode(node, new_x, y)
 
     def _moveRight(self, node: Node):
         x, y = node.state.coordinates
         new_x = x + 1
 
-        if new_x == self._parkSize:
+        if new_x >= self._parkSize:
             if y == self._parkSize // 2:
-                timeLeft = node.state.timeLeft - 1
-                if timeLeft < 0:
+                if node.state.timeLeft <= 1:
                     return None
-                newState = RescueState((new_x, y), True, timeLeft, node.state.rescued)
-                newNode = Node(newState, node)
-                newNode.cost = node.cost + 1
-                return newNode
-            else:
-                return None
-
-        if self._park[y][new_x] == 10:
+                return Node(
+                    RescueState(
+                        (new_x, y), True, node.state.timeLeft - 1, node.state.rescued
+                    ),
+                    node,
+                    node.cost + 1,
+                )
             return None
 
-        cost = self._park[y][new_x]
-        timeLeft = node.state.timeLeft
-        rescued = node.state.rescued
-
-        if cost < 0 and (new_x, y) not in rescued:
-            timeLeft += abs(cost)
-            rescued = rescued.union({(new_x, y)})
-        else:
-            timeLeft -= cost
-
-        if timeLeft <= 0:
+        if not self._isValid(new_x, y):
             return None
 
-        newState = RescueState((new_x, y), False, timeLeft, rescued)
-        newNode = Node(newState, node)
-        newNode.cost = node.cost + cost
-        return newNode
+        return self._createNode(node, new_x, y)
 
     @property
     def initialNodes(self):
+        # Pontos de entrada nas quatro direções do parque
         middle = self._parkSize // 2
-        size = self._parkSize
+        gates = [
+            (middle, self._parkSize - 1),
+            (middle, 0),
+            (0, middle),
+            (self._parkSize - 1, middle),
+        ]
 
-        gates = [(middle, size - 1), (middle, 0), (0, middle), (size - 1, middle)]
+        return [Node(RescueState(gate, False, self._time)) for gate in gates]
 
-        initialNodes = []
-
-        for gate in gates:
-            initialState = RescueState(gate, False, self._time)
-            node = Node(initialState)
-            initialNodes.append(node)
-
-        return initialNodes
-
-    @property
-    def goalState(self):
-        return self._goalState
-
-    @property
-    def goalNode(self) -> Node | None:
-        return self._goalNode
+    def getResultData(self):
+        # Devolve métricas do resultado se for encontrado um node objetivo
+        if self._goalNode:
+            currNode = self._goalNode
+            generations = 0
+            while currNode:
+                generations += 1
+                currNode = currNode.parent
+            return self._goalNode.cost, self._expansions, generations
 
     def isGoal(self, node: Node) -> bool:
-        s: RescueState = node.state
-
-        if s.timeLeft <= 0:
+        # Verifica condições do objetivo
+        s = node.state
+        if not s.teamLeft or len(s.rescued) != self._objective or s.timeLeft <= 0:
             return False
-
-        if len(s.rescued) != self._objective:
-            return False
-
-        if not s.teamLeft:
-            return False
-
         self._goalNode = node
         return True
 
     def expand(self, node: Node) -> list[Node]:
+        # Expande possíveis movimentos a partir do node atual
+
         if node.state.teamLeft:
             return []
 
@@ -242,87 +208,21 @@ class Rescue(Problem):
         if rightNode:
             expandedNodes.append(rightNode)
 
-        return sorted(expandedNodes)
+        self._expansions += 1
+        return expandedNodes
 
     def hashableState(self, node: Node):
+        # Cria identificador único para cada estado
         s = node.state
         return (s.coordinates, tuple(sorted(s.rescued)))
 
     def printSolution(self):
+        # Imprime o caminho da solução e informações relevantes
         currNode = self.goalNode
         path = []
-
         while currNode:
             path.append(currNode.state.coordinates)
-            # print(currNode.state.coordinates, currNode.state.timeLeft)
             currNode = currNode.parent
-        # print()
 
         path = path[::-1]
-        path_set = set(path)
-
-        last_x, last_y = path[-1]
-
-        # Determine entrance direction based on first move
-        first_x, first_y = path[0]
-        if first_y < 0:
-            entrance_symbol = "(^)"
-        elif first_y >= self._parkSize:
-            entrance_symbol = "(v)"
-        elif first_x < 0:
-            entrance_symbol = "(<)"
-        elif first_x >= self._parkSize:
-            entrance_symbol = "(>)"
-        else:
-            entrance_symbol = "(E)"
-
-        # Determine exit symbol
-        exit_symbol = ""
-        if last_y < 0:
-            exit_symbol = "(^)"
-        elif last_y >= self._parkSize:
-            exit_symbol = "(v)"
-        elif last_x < 0:
-            exit_symbol = "(<)"
-        elif last_x >= self._parkSize:
-            exit_symbol = "(>)"
-
-        print(f"Passos: {len(path) - 1}")
-        print("*" + "---" * self._parkSize + "*")
-
-        for y in range(self._parkSize):
-            row = "|"
-            for x in range(self._parkSize):
-                coord = (x, y)
-                tile = self._park[y][x]
-
-                if coord == path[0]:
-                    row += entrance_symbol
-                elif coord in path_set:
-                    if tile < 0 and coord in self.goalNode.state.rescued:
-                        row += f"({-tile})"
-                    elif tile == 2:
-                        row += "(:)"
-                    else:
-                        row += "(.)"
-                elif tile == 10:
-                    row += " # "
-                elif tile < 0:
-                    row += f" {-tile} "
-                elif tile == 2:
-                    row += " : "
-                elif tile == 1:
-                    row += " . "
-                else:
-                    row += " . "
-            row += "|"
-            print(row)
-
-        print("*" + "---" * self._parkSize + "*")
-
-        if exit_symbol and (last_x, last_y) not in path_set:
-            print(" " * (3 * last_x + 1) + exit_symbol)
-
-        print(
-            f"Tempo: {self.goalNode.state.timeLeft} ({len(self.goalNode.state.rescued)}/{self._totalVictims}), custo {self.goalNode.cost}"
-        )
+        print(f"Solução encontrada: {path}")
