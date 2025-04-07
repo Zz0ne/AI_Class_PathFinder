@@ -2,51 +2,10 @@ from time import time
 from threading import Thread
 import csv
 
+from prints import printPark, printTable
 from searchAlgorithms import uninformedSearch as search
 from problems.Resgate import Rescue
 from instances import instances
-
-
-def printAsciiTable(data, title=""):
-    if not data:
-        print("No data to display.")
-        return
-
-    headers = list(data[0].keys())
-    col_widths = [
-        max(len(str(row[h])) for row in data + [dict(zip(headers, headers))])
-        for h in headers
-    ]
-
-    total_width = sum(col_widths) + len(col_widths) * 3 + 1
-
-    if title:
-        print(title.center(total_width, "="))
-
-    header_row = (
-        "|"
-        + "|".join(f" {h.ljust(col_widths[i])} " for i, h in enumerate(headers))
-        + "|"
-    )
-    separator = (
-        "+" + "+".join("-" * (col_widths[i] + 2) for i in range(len(headers))) + "+"
-    )
-
-    print(separator)
-    print(header_row)
-    print(separator)
-
-    for row in data:
-        row_str = (
-            "|"
-            + "|".join(
-                f" {str(row[h]).ljust(col_widths[i])} " for i, h in enumerate(headers)
-            )
-            + "|"
-        )
-        print(row_str)
-
-    print(separator + "\n")
 
 
 if __name__ == "__main__":
@@ -56,16 +15,18 @@ if __name__ == "__main__":
 
     algorithms = [
         {
-            "name": "DLS",
+            "name": "DepthFirstSearch",
             "function": search.depthFirstSearch,
             "args": [None],
             "table": [],
+            "resultData": [],
         },
         {
-            "name": "BFS",
+            "name": "BreadthFirstSearch",
             "function": search.breadthFirstSearch,
             "args": [None],
             "table": [],
+            "resultData": [],
         },
     ]
 
@@ -95,6 +56,7 @@ if __name__ == "__main__":
             t.join(timeout=10)
 
             resultData = algorithm["args"][0].getResultData()
+            algorithm["resultData"].append(resultData)
 
             if resultData:
                 algorithm["table"].append(
@@ -118,13 +80,36 @@ if __name__ == "__main__":
                 )
 
     for algorithm in algorithms:
-        printAsciiTable(algorithm["table"], title=f" Results for {algorithm['name']} ")
+        pass
+        # printTable(algorithm["table"], title=f" Results for {algorithm['name']} ")
 
-    for algorithm in algorithms:
-        filename = f"{algorithm['name']}_results.csv"
+    for i, instance in enumerate(instances):
+        for algorithm in algorithms:
+            print(algorithm["name"])
 
-        with open(filename, mode="w", newline="", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=algorithm["table"][0].keys())
+            cost = algorithm["table"][i]["Custo"]
+            resultData = algorithm["resultData"][i]
+            rescued = resultData[3]
+            time = resultData[4]
 
-            writer.writeheader()
-            writer.writerows(algorithm["table"])
+            part2Path = algorithm["args"][0].getPath()
+            part2Size = len(part2Path)
+            part1Size = part2Size // 2
+            part1Path = part2Path[:part1Size]
+
+            print(f"Parte 1, passos {part1Size}:")
+            printPark(part1Path, instance["park"], instance["N"])
+
+            print(f"Parte 2, passos {part2Size}:")
+            printPark(part2Path, instance["park"], instance["N"])
+            print(f"Tempo: {time} ({rescued}/{instance['W']}), custo {resultData[0]}")
+            print()
+
+    # for algorithm in algorithms:
+    #     filename = f"{algorithm['name']}_results.csv"
+    #
+    #     with open(filename, mode="w", newline="", encoding="utf-8") as file:
+    #         writer = csv.DictWriter(file, fieldnames=algorithm["table"][0].keys())
+    #
+    #         writer.writeheader()
+    #         writer.writerows(algorithm["table"])

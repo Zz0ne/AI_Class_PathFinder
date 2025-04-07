@@ -174,7 +174,13 @@ class Rescue(Problem):
             while currNode:
                 generations += 1
                 currNode = currNode.parent
-            return self._goalNode.cost, self._expansions, generations
+            return (
+                self._goalNode.cost,
+                self._expansions,
+                generations,
+                len(self._goalNode.state.rescued),
+                self._goalNode.state.timeLeft,
+            )
 
     def isGoal(self, node: Node) -> bool:
         # Verifica condições do objetivo
@@ -216,13 +222,12 @@ class Rescue(Problem):
         s = node.state
         return (s.coordinates, tuple(sorted(s.rescued)))
 
-    def printSolution(self):
+    def getPath(self):
         # Imprime o caminho da solução e informações relevantes
-        currNode = self.goalNode
+        currNode = self._goalNode
         path = []
         while currNode:
             path.append(currNode.state.coordinates)
             currNode = currNode.parent
 
-        path = path[::-1]
-        print(f"Solução encontrada: {path}")
+        return path[::-1]
