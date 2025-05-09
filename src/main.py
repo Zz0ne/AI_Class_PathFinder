@@ -7,7 +7,7 @@ goalState = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 p8 = Puzzle8(initialState, goalState)
 
-if search.bestFirstSearch(p8):
+if search.aStar(p8):
 
     result = p8.goalNode
     steps = 0
