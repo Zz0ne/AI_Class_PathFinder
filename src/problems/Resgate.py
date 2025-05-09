@@ -70,6 +70,7 @@ class Rescue(Problem):
         new_y = y - 1
 
         if new_y < 0:
+            # Verifica se está numa saida
             if x == self._parkSize // 2:
                 if node.state.timeLeft <= 1:
                     return None
@@ -92,6 +93,7 @@ class Rescue(Problem):
         new_y = y + 1
 
         if new_y >= self._parkSize:
+            # Verifica se está numa saida
             if x == self._parkSize // 2:
                 if node.state.timeLeft <= 1:
                     return None
@@ -114,6 +116,7 @@ class Rescue(Problem):
         new_x = x - 1
 
         if new_x < 0:
+            # Verifica se está numa saida
             if y == self._parkSize // 2:
                 if node.state.timeLeft <= 1:
                     return None
@@ -136,6 +139,7 @@ class Rescue(Problem):
         new_x = x + 1
 
         if new_x >= self._parkSize:
+            # Verifica se está numa saida
             if y == self._parkSize // 2:
                 if node.state.timeLeft <= 1:
                     return None

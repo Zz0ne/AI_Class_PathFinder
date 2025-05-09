@@ -1,8 +1,10 @@
-from searchAlgorithms.helpers.Problem import Problem
+from searchAlgorithms.helpers.HeuristicProblem import HeuristicProblem
 from searchAlgorithms.helpers.Node import Node
 
+from typing import List
 
-class Puzzle8(Problem):
+
+class Puzzle8(HeuristicProblem):
     ROW_SIZE = 3
     COL_SIZE = 3
 
@@ -120,3 +122,26 @@ class Puzzle8(Problem):
 
     def hashableState(self, node: Node):
         return tuple(node.state)
+
+    def heuristic(self, node: Node):
+        # currState: List = node.state
+        # value = 0
+        #
+        # for i, state in enumerate(currState):
+        #     if state != self._goalState[i]:
+        #         value += 1
+        #
+        # return value
+        currState = node.state
+        distance = 0
+
+        for i, tile in enumerate(currState):
+            if tile == 0:
+                continue
+
+            goalIndex = self._goalState.index(tile)
+            x1, y1 = divmod(i, 3)
+            x2, y2 = divmod(goalIndex, 3)
+            distance += abs(x1 - x2) + abs(y1 - y2)
+
+        return distance
