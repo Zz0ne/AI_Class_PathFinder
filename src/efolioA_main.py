@@ -4,7 +4,7 @@ import csv
 
 from searchAlgorithms import uninformedSearch as search
 from problems.Resgate import Rescue
-from instances import instances
+from instancesEfolioA import instances
 
 
 def printAsciiTable(data, title=""):

@@ -16,6 +16,7 @@ def bestFirstSearch(problem: HeuristicProblem):
         _, currNode = heapq.heappop(frontier)
 
         if problem.isGoal(currNode):
+            problem.goalNode = currNode
             return True
 
         for childNode in problem.expand(currNode):
@@ -41,6 +42,7 @@ def aStar(problem: HeuristicProblem):
         _, currNode = heapq.heappop(frontier)
 
         if problem.isGoal(currNode):
+            problem.goalNode = currNode
             return True
 
         for child in problem.expand(currNode):

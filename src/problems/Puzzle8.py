@@ -1,8 +1,6 @@
 from searchAlgorithms.helpers.HeuristicProblem import HeuristicProblem
 from searchAlgorithms.helpers.Node import Node
 
-from typing import List
-
 
 class Puzzle8(HeuristicProblem):
     ROW_SIZE = 3

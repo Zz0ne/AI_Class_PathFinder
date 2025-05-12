@@ -20,6 +20,10 @@ class Problem:
     def goalNode(self) -> Node | None:
         raise NotImplementedError("goalNode must be implemented in a subclass")
 
+    @goalNode.setter
+    def goalNode(self, node: Node):
+        raise NotImplementedError("goalNode must be implemented in a subclass")
+
     def isGoal(self, node: Node) -> bool:
         raise NotImplementedError("isGoal must be implemented in a subclass")
 
