@@ -83,11 +83,14 @@ class ParkTour(HeuristicProblem):
         if new_y < 0:
             # Verifica se está numa saida
             if x == self._parkSize // 2:
-                if node.state.timeLeft <= 1:
+                if node.state.timeLeft < 1:
                     return None
                 return Node(
                     TourState(
-                        (x, new_y), True, node.state.timeLeft - 1, node.state.rescued
+                        (x, new_y),
+                        True,
+                        node.state.timeLeft - 1,
+                        node.state.satisfaction,
                     ),
                     node,
                     node.cost + 1,
@@ -106,11 +109,14 @@ class ParkTour(HeuristicProblem):
         if new_y >= self._parkSize:
             # Verifica se está numa saida
             if x == self._parkSize // 2:
-                if node.state.timeLeft <= 1:
+                if node.state.timeLeft < 1:
                     return None
                 return Node(
                     TourState(
-                        (x, new_y), True, node.state.timeLeft - 1, node.state.rescued
+                        (x, new_y),
+                        True,
+                        node.state.timeLeft - 1,
+                        node.state.satisfaction,
                     ),
                     node,
                     node.cost + 1,
@@ -129,11 +135,14 @@ class ParkTour(HeuristicProblem):
         if new_x < 0:
             # Verifica se está numa saida
             if y == self._parkSize // 2:
-                if node.state.timeLeft <= 1:
+                if node.state.timeLeft < 1:
                     return None
                 return Node(
                     TourState(
-                        (new_x, y), True, node.state.timeLeft - 1, node.state.rescued
+                        (new_x, y),
+                        True,
+                        node.state.timeLeft - 1,
+                        node.state.satisfaction,
                     ),
                     node,
                     node.cost + 1,
@@ -152,11 +161,14 @@ class ParkTour(HeuristicProblem):
         if new_x >= self._parkSize:
             # Verifica se está numa saida
             if y == self._parkSize // 2:
-                if node.state.timeLeft <= 1:
+                if node.state.timeLeft < 1:
                     return None
                 return Node(
                     TourState(
-                        (new_x, y), True, node.state.timeLeft - 1, node.state.rescued
+                        (new_x, y),
+                        True,
+                        node.state.timeLeft - 1,
+                        node.state.satisfaction,
                     ),
                     node,
                     node.cost + 1,
@@ -171,7 +183,7 @@ class ParkTour(HeuristicProblem):
     def expand(self, node: Node) -> list[Node]:
         # Expande possíveis movimentos a partir do node atual
 
-        if node.state.teamLeft:
+        if node.state.guideLeft:
             return []
 
         newNodes = []
@@ -219,7 +231,7 @@ class ParkTour(HeuristicProblem):
     def isGoal(self, node: Node) -> bool:
         # Verifica condições do objetivo
         s = node.state
-        return s.guideLeft and s.timeLeft == 0
+        return s.guideLeft
 
     def getResultData(self):
         # Devolve métricas do resultado se for encontrado um node objetivo
@@ -239,8 +251,8 @@ class ParkTour(HeuristicProblem):
 
     def hashableState(self, node: Node):
         # Cria identificador único para cada estado
-        s = node.state
-        return (s.coordinates, tuple(sorted(s.rescued)))
+        s: TourState = node.state
+        return (s.coordinates, s.satisfaction)
 
     def getPath(self):
         # Devolve o caminho da solução
@@ -262,5 +274,14 @@ class ParkTour(HeuristicProblem):
 
         return max(
             (self._idealSatisfaction) - (s.satisfaction + s.timeLeft),
+            0,
+        )
+
+    def g(self, node: Node):
+
+        s = node.state
+
+        return max(
+            (self._idealSatisfaction) - (s.satisfaction),
             0,
         )

@@ -8,3 +8,6 @@ class HeuristicProblem(Problem):
 
     def heuristic(self, node: Node):
         raise NotImplementedError("heuristic must be implemented in a subclass")
+
+    def g(self, node: Node):
+        raise NotImplementedError("g must be implemented in a subclass")

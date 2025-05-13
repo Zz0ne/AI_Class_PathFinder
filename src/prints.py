@@ -46,6 +46,7 @@ def printTable(data, title=""):
 def printPark(path: List[Tuple[int, int]], park: List[List[int]], parkSize: int):
     middle = parkSize // 2
 
+    visited = []
     southExit = (middle, parkSize)
     northExit = (middle, -1)
     westExit = (-1, middle)
@@ -78,13 +79,23 @@ def printPark(path: List[Tuple[int, int]], park: List[List[int]], parkSize: int)
                     rowStr += "[:]"
                 elif tile < 0:
                     rowStr += "[+]"
+            elif path.count((tileNum, rowNum)) > 1:
+                if tile == 1:
+                    rowStr += "{.}"
+                elif tile == 2:
+                    rowStr += "{:}"
+                elif tile < 0:
+                    rowStr += "{+}"
             elif (tileNum, rowNum) in path:
                 if tile == 1:
                     rowStr += "(.)"
+                    visited.append((tileNum, rowNum))
                 elif tile == 2:
                     rowStr += "(:)"
+                    visited.append((tileNum, rowNum))
                 elif tile < 0:
                     rowStr += "(+)"
+                    visited.append((tileNum, rowNum))
             else:
                 if tile == 10:
                     rowStr += " # "
