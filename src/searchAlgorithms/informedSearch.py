@@ -33,7 +33,7 @@ def aStar(problem: HeuristicProblem):
     frontier = []
 
     for node in problem.initialNodes:
-        f = problem.g(node) + problem.heuristic(node)  # f(n) = g(n) + h(n)
+        f = node.cost + problem.heuristic(node)  # f(n) = g(n) + h(n)
         heapq.heappush(frontier, (f, node))
 
     reached = {problem.hashableState(node): node.cost for node in problem.initialNodes}
@@ -47,7 +47,7 @@ def aStar(problem: HeuristicProblem):
 
         for child in problem.expand(currNode):
             stateKey = problem.hashableState(child)
-            g = problem.g(child)
+            g = child.cost
             if stateKey not in reached or g < reached[stateKey]:
                 reached[stateKey] = child.cost
                 f = g + problem.heuristic(child)

@@ -5,7 +5,7 @@ from copy import deepcopy
 
 from searchAlgorithms import informedSearch as search
 from problems.ParkTour import ParkTour
-from instancesEfolioA import instances
+from instancesEfolioB import instances
 from prints import printTable, printPark
 
 if __name__ == "__main__":
@@ -103,9 +103,9 @@ if __name__ == "__main__":
             print(algorithm["name"])
 
             try:
-                cost = algorithm["table"][i]["Custo"]
                 resultData = algorithm["resultData"][i]
-                rescued = resultData[3]
+                cost = resultData[0]
+                satisgaction = resultData[3]
                 time = resultData[4]
 
                 part2Path = algorithm["path"][i]
@@ -115,12 +115,14 @@ if __name__ == "__main__":
             except IndexError:
                 continue
 
-            print(f"Instancia {i+1}")
-            print(f"Parte 1, passos {part1Size}:")
-            printPark(part1Path, instance["park"], instance["N"])
+            # print(f"Instancia {i+1}")
+            # print(f"Parte 1, passos {part1Size}:")
+            # printPark(part1Path, instance["park"], instance["N"])
 
             print(f"Instancia {i+1}")
             print(f"Parte 2, passos {part2Size}:")
             printPark(part2Path, instance["park"], instance["N"])
-            print(f"Tempo: {time} ({rescued}/{instance['W']}), custo {resultData[0]}")
+            print(
+                f"Tempo: {time} ({satisgaction}/{instance['K'] + instance['time']}), custo {cost}"
+            )
             print()
