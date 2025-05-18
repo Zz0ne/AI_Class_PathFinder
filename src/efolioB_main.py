@@ -73,6 +73,7 @@ if __name__ == "__main__":
                         "Custo": resultData[0],
                         "Expansões": resultData[1],
                         "Gerações": resultData[2],
+                        "Avaliações": resultData[5],
                         "Tempo": f"{elapsedTime[0]:.2}",
                     }
                 )
@@ -83,6 +84,7 @@ if __name__ == "__main__":
                         "Custo": "",
                         "Expansões": "",
                         "Gerações": "",
+                        "Avaliações": "",
                         "Tempo": "",
                     }
                 )
@@ -90,20 +92,21 @@ if __name__ == "__main__":
     for algorithm in algorithms:
         printTable(algorithm["table"], title=f" Results for {algorithm['name']} ")
 
-    # for algorithm in algorithms:
-    #     filename = f"{algorithm['name']}_results.csv"
-    #
-    #     with open(filename, mode="w", newline="", encoding="utf-8") as file:
-    #         writer = csv.DictWriter(file, fieldnames=algorithm["table"][0].keys())
-    #
-    #         writer.writeheader()
-    #         writer.writerows(algorithm["table"])
+    for algorithm in algorithms:
+        filename = f"{algorithm['name']}_results.csv"
+
+        with open(filename, mode="w", newline="", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=algorithm["table"][0].keys())
+
+            writer.writeheader()
+            writer.writerows(algorithm["table"])
     for i, instance in enumerate(instances):
         for algorithm in algorithms:
             print(algorithm["name"])
 
             try:
                 resultData = algorithm["resultData"][i]
+
                 cost = resultData[0]
                 satisgaction = resultData[3]
                 time = resultData[4]
@@ -115,12 +118,7 @@ if __name__ == "__main__":
             except IndexError:
                 continue
 
-            # print(f"Instancia {i+1}")
-            # print(f"Parte 1, passos {part1Size}:")
-            # printPark(part1Path, instance["park"], instance["N"])
-
-            print(f"Instancia {i+1}")
-            print(f"Parte 2, passos {part2Size}:")
+            print(f"Instancia {i+1}, {part2Size} passos:")
             printPark(part2Path, instance["park"], instance["N"])
             print(
                 f"Tempo: {time} ({satisgaction}/{instance['K'] + instance['time']}), custo {cost}"

@@ -40,6 +40,7 @@ class ParkTour(HeuristicProblem):
         self._pointsOfInterestMap = self._gereratePointsOfInterestMap()
         self._exitDistanceMap = self._generateExitDistanceMap()
 
+        self._evaluations = 0
         self._satisfactionPenalty = 0
 
         self._goalNode: Node | None = None
@@ -90,26 +91,12 @@ class ParkTour(HeuristicProblem):
                 distMap[(x, y)] = exitDistances
         return distMap
 
-    def _isValid(self, x, y, timeLeft):
+    def _isValid(self, x, y):
         # Verifica se as coordenadas estão dentro do parque e não são bloqueadas por um obstáculo
         if not (0 <= x < self._parkSize and 0 <= y < self._parkSize):
             return False
 
         if self._park[y][x] == 10:
-            return False
-
-        # Tempo após o movimento
-        newTime = timeLeft
-        if self._park[y][x] > 0:
-            newTime -= self._park[y][x]
-        else:
-            newTime -= 1
-
-        # Distância mínima até saída, a partir do mapa
-        # cada entrada é (exit_coord, dist)
-        _, minDist = self._exitDistanceMap[(x, y)][0]
-
-        if newTime < minDist:
             return False
 
         return True
@@ -168,7 +155,7 @@ class ParkTour(HeuristicProblem):
                 )
             return None
 
-        if not self._isValid(x, new_y, node.state.timeLeft):
+        if not self._isValid(x, new_y):
             return None
 
         return self._createNode(node, x, new_y)
@@ -195,7 +182,7 @@ class ParkTour(HeuristicProblem):
                 )
             return None
 
-        if not self._isValid(x, new_y, node.state.timeLeft):
+        if not self._isValid(x, new_y):
             return None
 
         return self._createNode(node, x, new_y)
@@ -222,7 +209,7 @@ class ParkTour(HeuristicProblem):
                 )
             return None
 
-        if not self._isValid(new_x, y, node.state.timeLeft):
+        if not self._isValid(new_x, y):
             return None
 
         return self._createNode(node, new_x, y)
@@ -249,7 +236,7 @@ class ParkTour(HeuristicProblem):
                 )
             return None
 
-        if not self._isValid(new_x, y, node.state.timeLeft):
+        if not self._isValid(new_x, y):
             return None
 
         return self._createNode(node, new_x, y)
@@ -293,7 +280,11 @@ class ParkTour(HeuristicProblem):
         ]
 
         return [
-            Node(TourState(gate, False, self._time, 0, frozenset([]))) for gate in gates
+            Node(
+                TourState(gate, False, self._time, 0, frozenset([])),
+                cost=self._idealSatisfaction,
+            )
+            for gate in gates
         ]
 
     @property
@@ -307,7 +298,7 @@ class ParkTour(HeuristicProblem):
     def isGoal(self, node: Node) -> bool:
         # Verifica condições do objetivo
         s = node.state
-        return s.guideLeft and s.timeLeft == 0
+        return s.guideLeft
 
     def getResultData(self):
         # Devolve métricas do resultado se for encontrado um node objetivo
@@ -323,6 +314,7 @@ class ParkTour(HeuristicProblem):
                 generations,
                 self._goalNode.state.satisfaction,
                 self._goalNode.state.timeLeft,
+                self._evaluations,
             )
 
     def hashableState(self, node: Node):
@@ -340,27 +332,65 @@ class ParkTour(HeuristicProblem):
 
         return path[::-1]
 
-    def heuristic(self, node: Node):
-        """
-        Heurística admissível que subestima o custo restante para atingir a satisfação ideal,
-        ignorando possíveis ganhos adicionais de pontos de interesse ainda não visitados.
-        """
+    def heuristic1(self, node: Node):
+        s: TourState = node.state
+        remainingTime = s.timeLeft
+
+        try:
+            # Distância mínima até a saída
+            _, minExitDist = self._exitDistanceMap[s.coordinates][0]
+
+            if minExitDist > remainingTime:
+                # Impossível sair a tempo, custo altíssimo
+                return float("inf")
+
+            # Estima o melhor caso possível: assume que visita novas casas a cada minuto restante
+            maxPossibleSatisfaction = s.satisfaction + remainingTime
+
+            # Adiciona valores de todos os pontos de interesse ainda não visitados que cabem no tempo restante
+            availablePois = [
+                poi
+                for poi, _ in self._pointsOfInterestMap[s.coordinates]
+                if poi not in s.visited
+            ]
+            availablePOIValues = [abs(self._park[y][x]) for x, y in availablePois]
+
+            # Ordena os POIs por valor decrescente e soma enquanto houver tempo
+            availablePOIValues.sort(reverse=True)
+            poiTimeBudget = remainingTime - minExitDist
+            additionalSatisfaction = sum(availablePOIValues[:poiTimeBudget])
+
+            maxPossibleSatisfaction += additionalSatisfaction
+
+            # A heurística é a diferença para a satisfação ideal
+            return max(self._idealSatisfaction - maxPossibleSatisfaction, 0)
+        except Exception:
+            # Caso especial: coordenadas fora do parque (saída)
+            # Custo exato já conhecido, pois não há mais movimentos possíveis
+            return node.cost
+
+    def heuristic2(self, node: Node):
         s: TourState = node.state
 
         try:
-            nearestPOI, _ = self._pointsOfInterestMap[s.coordinates][0]
-            x, y = nearestPOI
+            # Apenas a distância mínima até a saída (garantidamente admissível)
+            _, minExitDist = self._exitDistanceMap[s.coordinates][0]
 
-            potentialSatisfacion = self._park[y][x]
-            if s.coordinates not in s.visited:
-                x, y = s.coordinates
-                potentialSatisfacion = -self._park[y][x]
-            else:
-                potentialSatisfacion -= 1
+            if minExitDist > s.timeLeft:
+                return float("inf")
 
-            return max(
-                (self._idealSatisfaction) - (potentialSatisfacion + s.timeLeft),
-                0,
-            )
-        except KeyError:  # A coordenada do estado atual é uma entrada/saida
-            return max((self._idealSatisfaction) - (s.satisfaction + s.timeLeft), 0)
+            # Retorna o custo mínimo possível (assumindo satisfação máxima do tempo restante)
+            # Supõe que a satisfação máxima possível adicional é simplesmente o tempo restante
+            return max(self._idealSatisfaction - (s.satisfaction + s.timeLeft), 0)
+
+        except KeyError:
+            # Coordenadas fora do parque, custo já conhecido
+            return node.cost
+
+    def heuristic(self, node: Node):
+        self._evaluations += 1
+
+        if self._parkSize <= 9:
+            return self.heuristic2(node)
+
+        return self.heuristic1(node)
